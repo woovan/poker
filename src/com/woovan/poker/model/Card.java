@@ -3,18 +3,31 @@ package com.woovan.poker.model;
 
 public class Card implements Comparable<Card> {
 
-	private final CardSuit suit;
-	
 	private final CardNumber number;
 	
-	public Card(final CardSuit suit, final CardNumber number) {
-		this.suit = suit;
+	private final CardSuit suit;
+	
+	public Card(final CardNumber number, final CardSuit suit) {
 		this.number = number;
+		this.suit = suit;
+	}
+	
+	public Card(String symbol) {
+		if (symbol != null && symbol.length() == 2) {
+			CardNumber number = CardNumber.getBySymbol(String.valueOf(symbol.charAt(0)));
+			CardSuit suit = CardSuit.getBySymbol(String.valueOf(symbol.charAt(1)));
+			if (number != null && suit != null) {
+				this.number = number;
+				this.suit = suit;
+				return;
+			}
+		}
+		throw new IllegalArgumentException("Initialize card with wrong symbol:" + symbol);
 	}
 	
 	@Override
 	public String toString() {
-		return suit.toString() + number.toString();
+		return number.toString() + suit.toString();
 	}
 	
 	@Override
@@ -23,11 +36,20 @@ public class Card implements Comparable<Card> {
 			return false;
 		}
 		Card other = (Card)obj;
-		return suit.equals(other.suit) && number.equals(other.number);
+		return number.equals(other.number) && suit.equals(other.suit);
 	}
 
 	@Override
 	public int compareTo(Card card) {
 		return number.compareTo(card.number);
 	}
+	
+	public CardNumber getNumber() {
+		return number;
+	}
+
+	public CardSuit getSuit() {
+		return suit;
+	}
+
 }

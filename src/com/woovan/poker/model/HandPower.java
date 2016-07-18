@@ -6,24 +6,24 @@ public class HandPower implements Comparable<HandPower> {
 
 	private final HandType handType;
 	
-	private final List<Card> cards;
+	private final List<Card> topCards;
 	
-	public HandPower(final HandType handType, final List<Card> cards) {
+	public HandPower(final HandType handType, final List<Card> topCards) {
 		this.handType = handType;
-		this.cards = cards;
+		this.topCards = topCards;
 	}
 	
 	@Override
 	public String toString() {
-		return handType.toString() + ":" + cards.toString();
+		return handType.toString() + ":" + topCards.toString();
 	}
 	
 	@Override
 	public int compareTo(HandPower o) {
 		int typeDifference = this.handType.compareTo(o.handType);
 		if (typeDifference == 0) {
-			for (int i = 0; i < cards.size(); i++) {
-				int difference = cards.get(i).compareTo(o.cards.get(i));
+			for (int i = 0; i < topCards.size(); i++) {
+				int difference = topCards.get(i).compareTo(o.topCards.get(i));
 				if (difference != 0) {
 					return difference;
 				}
@@ -37,9 +37,9 @@ public class HandPower implements Comparable<HandPower> {
 		return handType;
 	}
 
-	public List<Card> getCards() {
-		return cards;
+	public List<Card> getTopCards() {
+		return topCards;
 	}
-	
+
 	
 }

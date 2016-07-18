@@ -10,7 +10,7 @@ public enum CardNumber {
 	SEVEN("7"),
 	EIGHT("8"),
 	NINE("9"),
-	TEN("10"),
+	TEN("T"),
 	JACK("J"),
 	QUEEN("Q"),
 	KING("K"),
@@ -20,6 +20,15 @@ public enum CardNumber {
 	
 	private CardNumber(String symbol) {
 	    this.symbol = symbol;
+	}
+	
+	public static CardNumber getBySymbol(String symbol) {
+		for (CardNumber num : values()) {
+			if (num.symbol.equals(symbol)) {
+				return num;
+			}
+		}
+		return null;
 	}
 	
 	public String getSymbol() {
