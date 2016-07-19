@@ -21,6 +21,15 @@ public class CardUtil {
 		return cards;
 	}
 	
+	public List<CardNumber> cardsToCardNumber(List<Card> cards) {
+        List<CardNumber> cardNumbers = new ArrayList<CardNumber>();
+
+        for (Card card : cards) {
+            cardNumbers.add(card.getNumber());
+        }
+        return cardNumbers;
+    }
+	
 	public static List<Card> sort(List<Card> cards) {
 		List<Card> sortedCards = new ArrayList<Card>(cards);
 		Collections.sort(sortedCards);
@@ -59,7 +68,8 @@ public class CardUtil {
 		Card tail = cards.get(cards.size() - 1);
 		int range = head.getNumber().ordinal() - tail.getNumber().ordinal() + 1;
 		if (head.getNumber() == CardNumber.ACE) {
-			int range2 = cards.get(1).getNumber().ordinal() + 2;
+			head = cards.get(1);
+			int range2 = head.getNumber().ordinal() + 2;
 			range = Math.min(range, range2);
 		}
 		return range;
