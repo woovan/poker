@@ -47,9 +47,27 @@ public class Card implements Comparable<Card> {
 	public CardNumber getNumber() {
 		return number;
 	}
-
+	
 	public CardSuit getSuit() {
 		return suit;
 	}
-
+	
+	public int ordinal() {
+		return number.ordinal();
+	}
+	
+	public boolean is(CardNumber number) {
+		return this.number == number;
+	}
+	
+	public boolean is(CardSuit suit) {
+		return this.suit == suit;
+	}
+	
+	public boolean isConnecting(Card other) {
+		return other != null && 
+				(Math.abs(this.ordinal() - other.ordinal()) == 1 || 
+				Math.abs(this.ordinal() - other.ordinal()) == 12);
+	}
+	
 }

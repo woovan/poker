@@ -10,6 +10,11 @@ import com.woovan.poker.model.CardNumber;
 
 public class CardUtil {
 
+	/**
+	 * 形如"AsKhQcJdTs"的字符串转扑克列表
+	 * @param cardSymbols
+	 * @return
+	 */
 	public static List<Card> of(String cardSymbols) {
 		List<Card> cards = new ArrayList<Card>();
 		if (cardSymbols != null && cardSymbols.length() % 2 == 0) {
@@ -21,7 +26,12 @@ public class CardUtil {
 		return cards;
 	}
 	
-	public List<CardNumber> cardsToCardNumber(List<Card> cards) {
+	/**
+	 * 扑克转扑克编号
+	 * @param cards
+	 * @return
+	 */
+	public List<CardNumber> toCardNumber(List<Card> cards) {
         List<CardNumber> cardNumbers = new ArrayList<CardNumber>();
 
         for (Card card : cards) {
@@ -30,12 +40,22 @@ public class CardUtil {
         return cardNumbers;
     }
 	
+	/**
+	 * 扑克牌正序排列(从小到大)
+	 * @param cards
+	 * @return
+	 */
 	public static List<Card> sort(List<Card> cards) {
 		List<Card> sortedCards = new ArrayList<Card>(cards);
 		Collections.sort(sortedCards);
 		return sortedCards;
 	}
 	
+	/**
+	 * 扑克牌逆序排列(从大到小)
+	 * @param cards
+	 * @return
+	 */
 	public static List<Card> sortDesc(List<Card> cards) {
 		List<Card> sortedCards = new ArrayList<Card>(cards);
 		Collections.sort(sortedCards, new Comparator<Card>() {
@@ -48,36 +68,58 @@ public class CardUtil {
 		return sortedCards;
 	}
 	
-	public static int getCardRange(List<Card> cards) {
-		return getCardRange(cards, false);
+	/**
+	 * 扑克牌是否连续
+	 * @param cards
+	 * @return
+	 */
+	public static boolean isConnecting(List<Card> cards) {
+		return isConnecting(cards, true);
 	}
 	
-	public static int getCardRange(List<Card> cards, boolean needSort) {
-		if (cards == null || cards.isEmpty()) {
-			return 0;
-		}
-		if (cards.size() == 1) {
-			return 1;
+	/**
+	 * 扑克牌是否连续
+	 * @param cards
+	 * @param needSort 指定是否需要排序
+	 * @return
+	 */
+	public static boolean isConnecting(List<Card> cards, boolean needSort) {
+		if (cards == null || cards.isEmpty() || cards.size() == 1) {
+			return false;
 		}
 		if (needSort) {
 			List<Card> tmpCards = new ArrayList<Card>(cards);
-			sortDesc(tmpCards);
-			cards = tmpCards;
+			cards = sortDesc(tmpCards);
 		}
-		Card head = cards.get(0);
-		Card tail = cards.get(cards.size() - 1);
-		int range = head.getNumber().ordinal() - tail.getNumber().ordinal() + 1;
-		if (head.getNumber() == CardNumber.ACE) {
-			head = cards.get(1);
-			int range2 = head.getNumber().ordinal() + 2;
-			range = Math.min(range, range2);
+		boolean hasAce = cards.get(0).is(CardNumber.ACE);
+		if (hasAce) {
+			List<Card> cardsEndWithAce = new ArrayList<Card>(cards.subList(1, cards.size()));
+			cardsEndWithAce.add(cards.get(0));
+			return _isConnecting(cards) || _isConnecting(cardsEndWithAce);
+		} else {
+			return _isConnecting(cards);
 		}
-		return range;
+	}
+	
+	/**
+	 * 扑克牌是否连续(内部)
+	 * @param cards
+	 * @return
+	 */
+	private static boolean _isConnecting(List<Card> cards) {
+		Card prevCard = null;
+		for (Card card : cards) {
+			if (prevCard != null && !prevCard.isConnecting(card)) {
+				return false;
+			}
+			prevCard = card;
+		}
+		return true;
 	}
 	
 	public static void main(String[] args) {
-		String a = "AsKs5s4s2s";
+		String a = "KsAs";
 		List<Card> list = CardUtil.of(a);
-		System.out.println(getCardRange(list, false));
+		System.out.println(isConnecting(list));
 	}
 }

@@ -1,6 +1,7 @@
 package com.woovan.poker.utils;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,6 +31,10 @@ public class MapList<K, V> implements Iterable<List<V>> {
 
     public Set<K> keySet() {
         return mapList.keySet();
+    }
+    
+    public Collection<List<V>> values() {
+        return mapList.values();
     }
 
     public Set<Map.Entry<K, List<V>>> entrySet() {
