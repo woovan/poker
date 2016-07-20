@@ -22,17 +22,24 @@ public class HandPowerUtil {
 		
 		//获得同花数量大于等于5的卡牌
 		List<Card> flushCards = getFlushCards(suitGroup);
-		List<Card> straightFlush = getStraightFlush(flushCards);
-		if (straightFlush != null) {
-			if (straightFlush.get(0).is(CardNumber.ACE)) {
-				return new HandPower(HandType.ROYAL_FLUSH, straightFlush);
-			} else {
-				return new HandPower(HandType.STRAIGHT_FLUSH, straightFlush);
+		if (flushCards != null) {
+			List<Card> straightFlush = getStraightFlush(flushCards);
+			if (straightFlush != null) {
+				if (straightFlush.get(0).is(CardNumber.ACE)) {
+					return new HandPower(HandType.ROYAL_FLUSH, straightFlush);
+				} else {
+					return new HandPower(HandType.STRAIGHT_FLUSH, straightFlush);
+				}
 			}
 		}
 		
 		List<Card> fourOfAKind = getCardsByCount(4, numberGroup);
 		if (fourOfAKind != null) {
+			return new HandPower(HandType.FOUR_OF_A_KIND, fourOfAKind);
+		}
+		
+		List<Card> threeOfAKind = getCardsByCount(3, numberGroup);
+		if (threeOfAKind != null) {
 			return new HandPower(HandType.FOUR_OF_A_KIND, fourOfAKind);
 		}
 		
@@ -59,8 +66,9 @@ public class HandPowerUtil {
 		
 		List<Card> threeOfAKind = getCardsByCount(3, numberGroup);
 		if (threeOfAKind != null) {
-			
+			fullHouse.addAll(threeOfAKind);
 		}
+		
 		return null;
 	}
 	
