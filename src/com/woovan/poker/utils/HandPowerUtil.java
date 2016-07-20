@@ -67,6 +67,7 @@ public class HandPowerUtil {
 		List<Card> threeOfAKind = getCardsByCount(3, numberGroup);
 		if (threeOfAKind != null) {
 			fullHouse.addAll(threeOfAKind);
+			
 		}
 		
 		return null;
