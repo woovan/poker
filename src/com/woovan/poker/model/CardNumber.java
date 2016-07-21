@@ -31,6 +31,12 @@ public enum CardNumber {
 		return null;
 	}
 	
+	public boolean isConnecting(CardNumber other) {
+		return other != null && 
+				(Math.abs(this.ordinal() - other.ordinal()) == 1 || 
+				Math.abs(this.ordinal() - other.ordinal()) == 12);
+	}
+	
 	public String getSymbol() {
 		return symbol;
 	}

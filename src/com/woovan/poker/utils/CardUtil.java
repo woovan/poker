@@ -31,9 +31,8 @@ public class CardUtil {
 	 * @param cards
 	 * @return
 	 */
-	public List<CardNumber> toCardNumber(List<Card> cards) {
+	public static List<CardNumber> toCardNumber(List<Card> cards) {
         List<CardNumber> cardNumbers = new ArrayList<CardNumber>();
-
         for (Card card : cards) {
             cardNumbers.add(card.getNumber());
         }
@@ -41,31 +40,31 @@ public class CardUtil {
     }
 	
 	/**
-	 * 扑克牌正序排列(从小到大)
+	 * 正序排列(从小到大) 不改变原序列
 	 * @param cards
 	 * @return
 	 */
-	public static List<Card> sort(List<Card> cards) {
-		List<Card> sortedCards = new ArrayList<Card>(cards);
-		Collections.sort(sortedCards);
-		return sortedCards;
+	public static <T extends Comparable<? super T>> List<T> sort(List<T> list) {
+		List<T> sortedList = new ArrayList<T>(list);
+		Collections.sort(sortedList);
+		return sortedList;
 	}
 	
 	/**
-	 * 扑克牌逆序排列(从大到小)
+	 * 逆序排列(从大到小) 不改变原序列
 	 * @param cards
 	 * @return
 	 */
-	public static List<Card> sortDesc(List<Card> cards) {
-		List<Card> sortedCards = new ArrayList<Card>(cards);
-		Collections.sort(sortedCards, new Comparator<Card>() {
+	public static <T extends Comparable<? super T>> List<T> sortDesc(List<T> list) {
+		List<T> sortedList = new ArrayList<T>(list);
+		Collections.sort(sortedList, new Comparator<T>() {
 
 			@Override
-			public int compare(Card card1, Card card2) {
+			public int compare(T card1, T card2) {
 				return card2.compareTo(card1);
 			}
 		});
-		return sortedCards;
+		return sortedList;
 	}
 	
 	/**
@@ -73,8 +72,18 @@ public class CardUtil {
 	 * @param cards
 	 * @return
 	 */
-	public static boolean isConnecting(List<Card> cards) {
+	public static boolean isConnecting(List<CardNumber> cards) {
 		return isConnecting(cards, true);
+	}
+	
+	public static boolean isCardsConnecting(List<Card> cards) {
+		List<CardNumber> list = toCardNumber(cards);
+		return isConnecting(list, true);
+	}
+	
+	public static boolean isCardsConnecting(List<Card> cards, boolean needSort) {
+		List<CardNumber> list = toCardNumber(cards);
+		return isConnecting(list, needSort);
 	}
 	
 	/**
@@ -83,17 +92,16 @@ public class CardUtil {
 	 * @param needSort 指定是否需要排序
 	 * @return
 	 */
-	public static boolean isConnecting(List<Card> cards, boolean needSort) {
+	public static boolean isConnecting(List<CardNumber> cards, boolean needSort) {
 		if (cards == null || cards.isEmpty() || cards.size() == 1) {
 			return false;
 		}
 		if (needSort) {
-			List<Card> tmpCards = new ArrayList<Card>(cards);
-			cards = sortDesc(tmpCards);
+			cards = sortDesc(cards);
 		}
-		boolean hasAce = cards.get(0).is(CardNumber.ACE);
+		boolean hasAce = (cards.get(0) == CardNumber.ACE);
 		if (hasAce) {
-			List<Card> cardsEndWithAce = new ArrayList<Card>(cards.subList(1, cards.size()));
+			List<CardNumber> cardsEndWithAce = new ArrayList<CardNumber>(cards.subList(1, cards.size()));
 			cardsEndWithAce.add(cards.get(0));
 			return _isConnecting(cards) || _isConnecting(cardsEndWithAce);
 		} else {
@@ -106,13 +114,13 @@ public class CardUtil {
 	 * @param cards
 	 * @return
 	 */
-	private static boolean _isConnecting(List<Card> cards) {
-		Card prevCard = null;
-		for (Card card : cards) {
-			if (prevCard != null && !prevCard.isConnecting(card)) {
+	private static boolean _isConnecting(List<CardNumber> cardNumbers) {
+		CardNumber prevNum = null;
+		for (CardNumber num : cardNumbers) {
+			if (prevNum != null && !prevNum.isConnecting(num)) {
 				return false;
 			}
-			prevCard = card;
+			prevNum = num;
 		}
 		return true;
 	}
@@ -120,6 +128,6 @@ public class CardUtil {
 	public static void main(String[] args) {
 		String a = "KsAs";
 		List<Card> list = CardUtil.of(a);
-		System.out.println(isConnecting(list));
+		System.out.println(isCardsConnecting(list));
 	}
 }

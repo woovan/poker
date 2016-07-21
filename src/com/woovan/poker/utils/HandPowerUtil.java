@@ -1,6 +1,8 @@
 package com.woovan.poker.utils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -14,12 +16,34 @@ import com.woovan.poker.model.HandType;
 public class HandPowerUtil {
 	
 	public static void main(String[] args) {
-//		List<Card> cards = CardUtil.of("AsKsQsJsTs9s8s7s5s4s3s2s");
-		Deck deck = new Deck();
-		List<Card> cards = deck.deal(7);
-		System.out.println(cards);
-		System.out.println(CardUtil.sortDesc(cards));
-		System.out.println(calculate(cards));
+//		List<Card> cards = CardUtil.of("Qh2dKh2hJs2s6d");
+//		System.out.println(calculate(cards));
+		
+		long totalCount = 100000000;
+		
+		Map<HandType, Long> stat = new HashMap<HandType, Long>();
+		long beginTm = System.currentTimeMillis();
+		for (int i = 0; i < totalCount; i++) {
+			Deck deck = new Deck();
+			List<Card> cards = deck.deal(7);
+			HandPower handPower = calculate(cards);
+			Long count = stat.get(handPower.getHandType());
+			if (count == null) {
+				count = 0l;
+			}
+			stat.put(handPower.getHandType(), count + 1);
+//			System.out.println(cards);
+//			System.out.println(CardUtil.sortDesc(cards));
+//			System.out.println(calculate(cards) + "\r\n");
+		}
+		long cost = System.currentTimeMillis() - beginTm;
+		System.out.println(String.format("cost %dms", cost));
+		for (HandType type : HandType.values()) {
+			Long count = stat.get(type);
+			BigDecimal rate = new BigDecimal(count).divide(new BigDecimal(totalCount), 7, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+			System.out.println(String.format("%s:%d:%.5f%%", type.name(), count, rate.doubleValue()));
+		}
+		
 	}
 
 	public static HandPower calculate(List<Card> cards) {
@@ -27,7 +51,7 @@ public class HandPowerUtil {
 		//将扑克牌从大到小排序
 		List<Card> sortedCards = CardUtil.sortDesc(cards);
 		
-		//根据Number和花色分组，MapList内部用LinkedHashMap实现，所以分组是按扑克Number从大到小遍历
+		//根据Number和花色分组，MapList内部用LinkedHashMap实现，所以分组和组内列表都是按扑克Number从大到小排列
 		MapList<CardNumber, Card> numberGroup = getNumberGroup(sortedCards);
 		MapList<CardSuit, Card> suitGroup = getSuitGroup(sortedCards);
 		
@@ -36,7 +60,7 @@ public class HandPowerUtil {
 		if (flushCards != null) {
 			List<Card> straightFlush = getStraightFlush(flushCards);
 			if (straightFlush != null) {
-				if (straightFlush.get(0).is(CardNumber.ACE)) {
+				if (straightFlush.get(1).is(CardNumber.KING)) {
 					return new HandPower(HandType.ROYAL_FLUSH, straightFlush);
 				} else {
 					return new HandPower(HandType.STRAIGHT_FLUSH, straightFlush);
@@ -63,15 +87,15 @@ public class HandPowerUtil {
 		}
 		
 		//顺子
-		List<Card> straight = getStraight(sortedCards);
+		List<Card> straight = getStraight(numberGroup);
 		if (straight != null) {
 			return new HandPower(HandType.STRAIGHT, straight);
 		}
 		
 		//三条
-		List<Card> threeOfAKind = getCardsByCount(3, numberGroup);
+		List<Card> threeOfAKind = getThreeOfAKind(numberGroup);
 		if (threeOfAKind != null) {
-			return new HandPower(HandType.FOUR_OF_A_KIND, threeOfAKind);
+			return new HandPower(HandType.THREE_OF_A_KIND, threeOfAKind);
 		}
 		
 		//对子
@@ -91,11 +115,28 @@ public class HandPowerUtil {
 	
 	/**
 	 * 从同花牌中获得最大同花顺
-	 * @param suitGroup
+	 * @param flushCards 同花扑克牌组(同花数>=5)
 	 * @return
 	 */
 	private static List<Card> getStraightFlush(List<Card> flushCards) {
-        return getStraight(flushCards);
+		if (flushCards.size() == 5) {
+			if (CardUtil.isCardsConnecting(flushCards)) {
+				return flushCards;
+			}
+		} else {
+			if (flushCards.get(0).is(CardNumber.ACE)) {
+				List<Card> tmpCards = new ArrayList<Card>(flushCards);
+				tmpCards.add(flushCards.get(0));
+				flushCards = tmpCards;
+			}
+			for (int i = 0; i < flushCards.size() - 5 + 1; i++) {
+	        	List<Card> subList = flushCards.subList(i, i + 5);
+	        	if (CardUtil.isCardsConnecting(subList, false)) {
+	        		return new ArrayList<Card>(subList);
+	        	}
+			}
+		}
+		return null;
     }
 	
 	/**
@@ -110,9 +151,9 @@ public class HandPowerUtil {
 		if (threeOfAKind != null) {
 			fullHouse.addAll(threeOfAKind);
 			
-			CardNumber cardNumber = threeOfAKind.get(0).getNumber();
+			CardNumber cardNumerForThree = threeOfAKind.get(0).getNumber();
 			for (Map.Entry<CardNumber, List<Card>> entry : numberGroup.entrySet()) {
-				if (entry.getValue().size() >= 2 && entry.getKey() != cardNumber) {
+				if (entry.getValue().size() >= 2 && entry.getKey() != cardNumerForThree) {
 					if (entry.getValue().size() == 2) {
 						fullHouse.addAll(entry.getValue());
 					} else {
@@ -150,24 +191,62 @@ public class HandPowerUtil {
 	}
 	
 	/**
-	 * 获得扑克牌中最大顺子
-	 * @param cards
+	 * 获得分组中最大的顺子
+	 * @param numberGroup
 	 * @return
 	 */
-	private static List<Card> getStraight(List<Card> cards) {
-		if (cards == null || cards.size() < 5) {
+	private static List<Card> getStraight(MapList<CardNumber, Card> numberGroup) {
+		if (numberGroup.size() < 5) {
 			return null;
 		}
-		if (cards.get(0).is(CardNumber.ACE)) {
-			List<Card> tmpCards = new ArrayList<Card>(cards);
-			tmpCards.add(cards.get(0));
-			cards = tmpCards;
+		List<CardNumber> straightNumber = null;
+		List<CardNumber> cardNumbers = new ArrayList<CardNumber>(numberGroup.keySet());
+		if (cardNumbers.size() == 5) {
+			if (CardUtil.isConnecting(cardNumbers, false)) {
+				straightNumber = cardNumbers;
+			}
+		} else {
+			if (cardNumbers.get(0) == CardNumber.ACE) {
+				cardNumbers.add(CardNumber.ACE);
+			}
+			for (int i = 0; i < cardNumbers.size() - 5 + 1; i++) {
+	        	List<CardNumber> subList = cardNumbers.subList(i, i + 5);
+	        	if (CardUtil.isConnecting(subList, false)) {
+	        		straightNumber = new ArrayList<CardNumber>(subList);
+	        		break;
+	        	}
+			}
 		}
-		for (int i = 0; i < cards.size() - 5 + 1; i++) {
-        	List<Card> subList = cards.subList(i, i + 5);
-        	if (CardUtil.isConnecting(subList, false)) {
-        		return new ArrayList<Card>(subList);
-        	}
+		if (straightNumber != null) {
+			List<Card> straight = new ArrayList<Card>();
+			for (CardNumber cardNumber : straightNumber) {
+				straight.add(numberGroup.get(cardNumber).get(0));
+			}
+			return straight;
+		}
+		return null;
+	}
+	
+	/**
+	 * 获得分组中最大的三条
+	 * @param numberGroup
+	 * @return
+	 */
+	private static List<Card> getThreeOfAKind(MapList<CardNumber, Card> numberGroup) {
+		List<Card> threeOfAKind = getCardsByCount(3, numberGroup);
+		
+		if (threeOfAKind != null) {
+			CardNumber cardNumerForThree = threeOfAKind.get(0).getNumber();
+			for (List<Card> cards : numberGroup) {
+				if (threeOfAKind.size() < 5) {
+					if (cards.get(0).getNumber() != cardNumerForThree) {
+						threeOfAKind.add(cards.get(0));
+					}
+				} else {
+					break;
+				}
+			}
+			return threeOfAKind;
 		}
 		return null;
 	}

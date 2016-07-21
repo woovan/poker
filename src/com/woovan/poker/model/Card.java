@@ -65,9 +65,7 @@ public class Card implements Comparable<Card> {
 	}
 	
 	public boolean isConnecting(Card other) {
-		return other != null && 
-				(Math.abs(this.ordinal() - other.ordinal()) == 1 || 
-				Math.abs(this.ordinal() - other.ordinal()) == 12);
+		return number.isConnecting(other.getNumber());
 	}
 	
 }
