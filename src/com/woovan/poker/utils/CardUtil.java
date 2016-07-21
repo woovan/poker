@@ -117,7 +117,7 @@ public class CardUtil {
 	private static boolean _isConnecting(List<CardNumber> cardNumbers) {
 		CardNumber prevNum = null;
 		for (CardNumber num : cardNumbers) {
-			if (prevNum != null && !prevNum.isConnecting(num)) {
+			if (prevNum != null && prevNum.ordinal() != num.ordinal() + 1) {
 				return false;
 			}
 			prevNum = num;
@@ -126,7 +126,7 @@ public class CardUtil {
 	}
 	
 	public static void main(String[] args) {
-		String a = "KsAs";
+		String a = "As2sAc";
 		List<Card> list = CardUtil.of(a);
 		System.out.println(isCardsConnecting(list));
 	}

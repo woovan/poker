@@ -120,7 +120,7 @@ public class HandPowerUtil {
 	 */
 	private static List<Card> getStraightFlush(List<Card> flushCards) {
 		if (flushCards.size() == 5) {
-			if (CardUtil.isCardsConnecting(flushCards)) {
+			if (CardUtil.isCardsConnecting(flushCards, false)) {
 				return flushCards;
 			}
 		} else {
