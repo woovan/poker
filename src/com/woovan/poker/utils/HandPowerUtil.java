@@ -23,9 +23,9 @@ public class HandPowerUtil {
 		
 		Map<HandType, Long> stat = new HashMap<HandType, Long>();
 		long beginTm = System.currentTimeMillis();
+		Deck deck = new Deck();
 		for (int i = 0; i < totalCount; i++) {
-			Deck deck = new Deck();
-			List<Card> cards = deck.deal(7);
+			List<Card> cards = deck.show(7);
 			HandPower handPower = calculate(cards);
 			Long count = stat.get(handPower.getHandType());
 			if (count == null) {
