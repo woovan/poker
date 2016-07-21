@@ -33,10 +33,6 @@ public class MapList<K, V> implements Iterable<List<V>> {
         return mapList.keySet();
     }
     
-    public Collection<List<V>> values() {
-        return mapList.values();
-    }
-
     public Set<Map.Entry<K, List<V>>> entrySet() {
         return mapList.entrySet();
     }
