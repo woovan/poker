@@ -11,8 +11,10 @@ lib/
 .classpath/
 .svn/
 *.log
+*.bak
 logs/
 out/
 db/
 .mymetadata
+.myeclipse/
 /src/test/*

@@ -15,14 +15,13 @@ public class Deck {
                 cards.add(card);
             }
         }
-        Collections.shuffle(cards);
+    	shuffle();
     }
     
-    @Override
-    public String toString() {
-    	return cards.toString();
+    public void shuffle() {
+    	Collections.shuffle(cards);
     }
-
+    
     public List<Card> getCards() {
         return cards;
     }
@@ -31,6 +30,16 @@ public class Deck {
     	List<Card> takes = new ArrayList<Card>(cards.subList(0, count));
     	cards.removeAll(takes);
     	return takes;
+    }
+    
+    public List<Card> show(int count) {
+    	shuffle();
+    	return new ArrayList<Card>(cards.subList(0, count));
+    }
+    
+    @Override
+    public String toString() {
+    	return cards.toString();
     }
     
     public static void main(String[] args) {
