@@ -76,16 +76,6 @@ public class CardUtil {
 		return isConnecting(cards, true);
 	}
 	
-	public static boolean isCardsConnecting(List<Card> cards) {
-		List<CardNumber> list = toCardNumber(cards);
-		return isConnecting(list, true);
-	}
-	
-	public static boolean isCardsConnecting(List<Card> cards, boolean needSort) {
-		List<CardNumber> list = toCardNumber(cards);
-		return isConnecting(list, needSort);
-	}
-	
 	/**
 	 * 扑克牌是否连续
 	 * @param cards
@@ -107,6 +97,21 @@ public class CardUtil {
 		} else {
 			return _isConnecting(cards);
 		}
+	}
+	
+	/**
+	 * 扑克牌是否连续
+	 * @param cards
+	 * @return
+	 */
+	public static boolean isCardsConnecting(List<Card> cards) {
+		List<CardNumber> list = toCardNumber(cards);
+		return isConnecting(list, true);
+	}
+	
+	public static boolean isCardsConnecting(List<Card> cards, boolean needSort) {
+		List<CardNumber> list = toCardNumber(cards);
+		return isConnecting(list, needSort);
 	}
 	
 	/**

@@ -45,6 +45,28 @@ public class HandPowerUtil {
 		}
 		
 	}
+	
+	public static void play(long totalCount) {
+		Map<HandType, Long> stat = new HashMap<HandType, Long>();
+		long beginTm = System.currentTimeMillis();
+		for (int i = 0; i < totalCount; i++) {
+			Deck deck = new Deck();
+			List<Card> cards = deck.deal(7);
+			HandPower handPower = calculate(cards);
+			Long count = stat.get(handPower.getHandType());
+			if (count == null) {
+				count = 0l;
+			}
+			stat.put(handPower.getHandType(), count + 1);
+		}
+		long cost = System.currentTimeMillis() - beginTm;
+		System.out.println(String.format("cost %dms", cost));
+		for (HandType type : HandType.values()) {
+			Long count = stat.get(type);
+			BigDecimal rate = new BigDecimal(count).divide(new BigDecimal(totalCount), 7, BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+			System.out.println(String.format("%s:%d:%.5f%%", type.name(), count, rate.doubleValue()));
+		}
+	}
 
 	public static HandPower calculate(List<Card> cards) {
 		
@@ -69,7 +91,7 @@ public class HandPowerUtil {
 		}
 		
 		//四条
-		List<Card> fourOfAKind = getCardsByCount(4, numberGroup);
+		List<Card> fourOfAKind = getFourOfAKind(numberGroup);
 		if (fourOfAKind != null) {
 			return new HandPower(HandType.FOUR_OF_A_KIND, fourOfAKind);
 		}
@@ -138,6 +160,27 @@ public class HandPowerUtil {
 		}
 		return null;
     }
+	
+	/**
+	 * 获得分组中最大的四条
+	 * @param numberGroup
+	 * @return
+	 */
+	private static List<Card> getFourOfAKind(MapList<CardNumber, Card> numberGroup) {
+		List<Card> fourOfAKind = getCardsByCount(4, numberGroup);
+		
+		if (fourOfAKind != null) {
+			CardNumber cardNumerForFour = fourOfAKind.get(0).getNumber();
+			for (List<Card> cards : numberGroup) {
+				if (cards.get(0).getNumber() != cardNumerForFour) {
+					fourOfAKind.add(cards.get(0));
+					break;
+				}
+			}
+			return fourOfAKind;
+		}
+		return null;
+	}
 	
 	/**
 	 * 从分组中获取最大的葫芦
