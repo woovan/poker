@@ -26,6 +26,10 @@ public class Deck {
         return cards;
     }
     
+    public void remove(List<Card> cards) {
+    	this.cards.removeAll(cards);
+    }
+    
     public List<Card> deal(int count) {
     	List<Card> takes = new ArrayList<Card>(cards.subList(0, count));
     	cards.removeAll(takes);
@@ -33,7 +37,6 @@ public class Deck {
     }
     
     public List<Card> show(int count) {
-    	shuffle();
     	return new ArrayList<Card>(cards.subList(0, count));
     }
     

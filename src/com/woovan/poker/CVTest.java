@@ -11,7 +11,7 @@ public class CVTest {
 	
 	public static final String INPUT_IMAGE = "D://aaa.png";
 	
-	public static final String OUTPUT_IMAGE = "D://bbb.bmp";
+	public static final String OUTPUT_IMAGE = "D://bbb.png";
 
 	public static void main(String[] args) {
 		

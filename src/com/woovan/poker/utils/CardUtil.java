@@ -15,13 +15,22 @@ public class CardUtil {
 	 * @param cardSymbols
 	 * @return
 	 */
-	public static List<Card> of(String cardSymbols) {
+	public static List<Card> card(String cardSymbol) {
 		List<Card> cards = new ArrayList<Card>();
-		if (cardSymbols != null && cardSymbols.length() % 2 == 0) {
-			for (int i = 0; i < cardSymbols.length(); i+=2) {
-				Card card = new Card(cardSymbols.substring(i, i + 2));
+		if (cardSymbol != null && cardSymbol.length() % 2 == 0) {
+			for (int i = 0; i < cardSymbol.length(); i+=2) {
+				Card card = new Card(cardSymbol.substring(i, i + 2));
 				cards.add(card);
 			}
+		}
+		return cards;
+	}
+	
+	public static List<List<Card>> cards(String... cardList) {
+		List<List<Card>> cards = new ArrayList<List<Card>>();
+		
+		for (String cardSymbol : cardList) {
+			cards.add(card(cardSymbol));
 		}
 		return cards;
 	}
@@ -134,7 +143,7 @@ public class CardUtil {
 	
 	public static void main(String[] args) {
 		String a = "As5s4s3s2s";
-		List<Card> list = CardUtil.of(a);
+		List<Card> list = CardUtil.card(a);
 		System.out.println(isCardsConnecting(list));
 	}
 }
