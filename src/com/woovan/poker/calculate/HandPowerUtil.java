@@ -1,4 +1,4 @@
-package com.woovan.poker.utils;
+package com.woovan.poker.calculate;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -12,6 +12,8 @@ import com.woovan.poker.model.CardSuit;
 import com.woovan.poker.model.Deck;
 import com.woovan.poker.model.HandPower;
 import com.woovan.poker.model.HandType;
+import com.woovan.poker.utils.CardUtil;
+import com.woovan.poker.utils.MapList;
 
 public class HandPowerUtil {
 	
@@ -57,18 +59,19 @@ public class HandPowerUtil {
 	public static HandPower calculate(List<Card> hands) {
 		
 		//将扑克牌从大到小排序
-		List<Card> sortedCards = CardUtil.sortDesc(hands);
+		CardUtil.sortDesc(hands);
 		
 		//根据Number和花色分组，MapList内部用LinkedHashMap实现，所以分组和组内列表都是按扑克Number从大到小排列
-		MapList<CardNumber, Card> numberGroup = getNumberGroup(sortedCards);
-		MapList<CardSuit, Card> suitGroup = getSuitGroup(sortedCards);
+		MapList<CardNumber, Card> numberGroup = getNumberGroup(hands);
+		MapList<CardSuit, Card> suitGroup = getSuitGroup(hands);
+		MapList<Integer, List<Card>> countGroup = getCountGroup(numberGroup);
 		
 		//同花顺
 		List<Card> flushCards = getFlushCards(suitGroup);
 		if (flushCards != null) {
 			List<Card> straightFlush = getStraightFlush(flushCards);
 			if (straightFlush != null) {
-				if (straightFlush.get(1).is(CardNumber.KING)) {
+				if (straightFlush.get(0).is(CardNumber.ACE)) {
 					return new HandPower(HandType.ROYAL_FLUSH, straightFlush);
 				} else {
 					return new HandPower(HandType.STRAIGHT_FLUSH, straightFlush);
@@ -77,14 +80,15 @@ public class HandPowerUtil {
 		}
 		
 		//四条
-		List<Card> fourOfAKind = getFourOfAKind(numberGroup);
-		if (fourOfAKind != null) {
+		if (countGroup.containsKey(4)) {
+			List<Card> fourOfAKind = countGroup.get(4).get(0);
+			completeCardsWithSingleCard(fourOfAKind, numberGroup);
 			return new HandPower(HandType.FOUR_OF_A_KIND, fourOfAKind);
 		}
 		
 		//葫芦
-		List<Card> fullHouse = getFullHouse(numberGroup);
-		if (fullHouse != null) {
+		if (countGroup.containsKey(3) && countGroup.containsKey(2)) {
+			List<Card> fullHouse = getFullHouse(countGroup);
 			return new HandPower(HandType.FULL_HOUSE, fullHouse);
 		}
 		
@@ -101,46 +105,53 @@ public class HandPowerUtil {
 		}
 		
 		//三条
-		List<Card> threeOfAKind = getThreeOfAKind(numberGroup);
-		if (threeOfAKind != null) {
+		if (countGroup.containsKey(3)) {
+			List<Card> threeOfAKind = countGroup.get(3).get(0);
+			completeCardsWithSingleCard(threeOfAKind, numberGroup);
 			return new HandPower(HandType.THREE_OF_A_KIND, threeOfAKind);
 		}
 		
 		//对子
-		int pairCount = getPairCount(numberGroup);
-		if (pairCount > 0) {
-			List<Card> pairs = getPairs(numberGroup);
-			if (pairCount >= 2) {
+		if (countGroup.containsKey(2)) {
+			List<List<Card>> pairList = countGroup.get(2);
+			List<Card> pairs = getPairs(pairList, numberGroup);
+			if (pairList.size() >= 2) {
 				return new HandPower(HandType.TWO_PAIR, pairs);
+			} else {
+				return new HandPower(HandType.ONE_PAIR, pairs);
 			}
-			return new HandPower(HandType.ONE_PAIR, pairs);
 		}
 		
 		//高牌
-		List<Card> highCard = sortedCards.subList(0, 5);
+		List<Card> highCard = hands.subList(0, 5);
 		return new HandPower(HandType.HIGH_CARD, highCard);
 	}
 	
 	/**
 	 * 从同花牌中获得最大同花顺
-	 * @param flushCards 同花扑克牌组(同花数>=5)
+	 * @param flushCards 同花扑克牌组(牌数>=5)
 	 * @return
 	 */
 	private static List<Card> getStraightFlush(List<Card> flushCards) {
+		if (flushCards.get(0).is(CardNumber.ACE) && flushCards.get(flushCards.size() - 1).is(CardNumber.TWO)) {
+			List<Card> tmpCards;
+			if (flushCards.get(1).is(CardNumber.KING)) {
+				tmpCards = new ArrayList<Card>(flushCards);
+			} else {
+				tmpCards = new ArrayList<Card>(flushCards.subList(1, flushCards.size()));
+			}
+			tmpCards.add(flushCards.get(0));
+			flushCards = tmpCards;
+		}
 		if (flushCards.size() == 5) {
-			if (CardUtil.isCardsConnecting(flushCards, false)) {
-				return flushCards;
-			}
+			if (CardUtil.isCardsConnecting(flushCards)) {
+        		return flushCards;
+        	}
 		} else {
-			if (flushCards.get(0).is(CardNumber.ACE)) {
-				List<Card> tmpCards = new ArrayList<Card>(flushCards);
-				tmpCards.add(flushCards.get(0));
-				flushCards = tmpCards;
-			}
 			for (int i = 0; i < flushCards.size() - 5 + 1; i++) {
 	        	List<Card> subList = flushCards.subList(i, i + 5);
-	        	if (CardUtil.isCardsConnecting(subList, false)) {
-	        		return new ArrayList<Card>(subList);
+	        	if (CardUtil.isCardsConnecting(subList)) {
+	        		return subList;
 	        	}
 			}
 		}
@@ -148,51 +159,33 @@ public class HandPowerUtil {
     }
 	
 	/**
-	 * 获得分组中最大的四条
+	 * 用单张补全牌组
 	 * @param numberGroup
 	 * @return
 	 */
-	private static List<Card> getFourOfAKind(MapList<CardNumber, Card> numberGroup) {
-		List<Card> fourOfAKind = getCardsByCount(4, numberGroup);
-		
-		if (fourOfAKind != null) {
-			CardNumber cardNumerForFour = fourOfAKind.get(0).getNumber();
-			for (List<Card> cards : numberGroup) {
-				if (cards.get(0).getNumber() != cardNumerForFour) {
-					fourOfAKind.add(cards.get(0));
-					break;
-				}
+	private static void completeCardsWithSingleCard(List<Card> cardList, MapList<CardNumber, Card> numberGroup) {
+		CardNumber cardNumber = cardList.get(0).getNumber();
+		for (List<Card> cards : numberGroup) {
+			if (cards.get(0).getNumber() != cardNumber) {
+				cardList.add(cards.get(0));
 			}
-			return fourOfAKind;
+			if (cardList.size() == 5) break;
 		}
-		return null;
 	}
 	
 	/**
-	 * 从分组中获取最大的葫芦
-	 * @param numberGroup
+	 * 获得葫芦
+	 * @param countGroup
 	 * @return
 	 */
-	private static List<Card> getFullHouse(MapList<CardNumber, Card> numberGroup) {
-		List<Card> fullHouse = new ArrayList<Card>();
+	private static List<Card> getFullHouse(MapList<Integer, List<Card>> countGroup) {
+		List<Card> threeOfAKind = countGroup.get(3).get(0);
+		List<Card> pair = countGroup.get(2).get(0);
 		
-		List<Card> threeOfAKind = getCardsByCount(3, numberGroup);
-		if (threeOfAKind != null) {
-			fullHouse.addAll(threeOfAKind);
-			
-			CardNumber cardNumerForThree = threeOfAKind.get(0).getNumber();
-			for (Map.Entry<CardNumber, List<Card>> entry : numberGroup.entrySet()) {
-				if (entry.getValue().size() >= 2 && entry.getKey() != cardNumerForThree) {
-					if (entry.getValue().size() == 2) {
-						fullHouse.addAll(entry.getValue());
-					} else {
-						fullHouse.addAll(entry.getValue().subList(0, 2));
-					}
-					return fullHouse;
-				}
-			}
-		}
-		return null;
+		List<Card> fullHouse = new ArrayList<Card>();
+		fullHouse.addAll(threeOfAKind);
+		fullHouse.addAll(pair);
+		return fullHouse;
 	}
 	
 	/**
@@ -228,27 +221,36 @@ public class HandPowerUtil {
 		if (numberGroup.size() < 5) {
 			return null;
 		}
-		List<CardNumber> straightNumber = null;
+		
 		List<CardNumber> cardNumbers = new ArrayList<CardNumber>(numberGroup.keySet());
+		if (cardNumbers.get(0) == CardNumber.ACE && cardNumbers.get(cardNumbers.size() - 1) == CardNumber.TWO) {
+			List<CardNumber> tmpCardNumbers;
+			if (cardNumbers.get(1) == CardNumber.KING) {
+				tmpCardNumbers = new ArrayList<CardNumber>(cardNumbers);
+			} else {
+				tmpCardNumbers = new ArrayList<CardNumber>(cardNumbers.subList(1, cardNumbers.size()));
+			}
+			tmpCardNumbers.add(cardNumbers.get(0));
+			cardNumbers = tmpCardNumbers;
+		}
+		
+		List<CardNumber> straightNumbers = null;
 		if (cardNumbers.size() == 5) {
-			if (CardUtil.isConnecting(cardNumbers, false)) {
-				straightNumber = cardNumbers;
+			if (CardUtil.isConnecting(cardNumbers)) {
+				straightNumbers = cardNumbers;
 			}
 		} else {
-			if (cardNumbers.get(0) == CardNumber.ACE) {
-				cardNumbers.add(CardNumber.ACE);
-			}
 			for (int i = 0; i < cardNumbers.size() - 5 + 1; i++) {
 	        	List<CardNumber> subList = cardNumbers.subList(i, i + 5);
-	        	if (CardUtil.isConnecting(subList, false)) {
-	        		straightNumber = new ArrayList<CardNumber>(subList);
+	        	if (CardUtil.isConnecting(subList)) {
+	        		straightNumbers = new ArrayList<CardNumber>(subList);
 	        		break;
 	        	}
 			}
 		}
-		if (straightNumber != null) {
+		if (straightNumbers != null) {
 			List<Card> straight = new ArrayList<Card>();
-			for (CardNumber cardNumber : straightNumber) {
+			for (CardNumber cardNumber : straightNumbers) {
 				straight.add(numberGroup.get(cardNumber).get(0));
 			}
 			return straight;
@@ -257,83 +259,25 @@ public class HandPowerUtil {
 	}
 	
 	/**
-	 * 获得分组中最大的三条
-	 * @param numberGroup
-	 * @return
-	 */
-	private static List<Card> getThreeOfAKind(MapList<CardNumber, Card> numberGroup) {
-		List<Card> threeOfAKind = getCardsByCount(3, numberGroup);
-		
-		if (threeOfAKind != null) {
-			CardNumber cardNumerForThree = threeOfAKind.get(0).getNumber();
-			for (List<Card> cards : numberGroup) {
-				if (threeOfAKind.size() < 5) {
-					if (cards.get(0).getNumber() != cardNumerForThree) {
-						threeOfAKind.add(cards.get(0));
-					}
-				} else {
-					break;
-				}
-			}
-			return threeOfAKind;
-		}
-		return null;
-	}
-	
-	/**
-	 * 获得分组中对子的数量
-	 * @param numberGroup
-	 * @return
-	 */
-	private static int getPairCount(MapList<CardNumber, Card> numberGroup) {
-		int pairCount = 0;
-		for (List<Card> cards : numberGroup) {
-			if (cards.size() == 2) {
-				pairCount ++;
-			}
-		}
-		return pairCount;
-	}
-	
-	/**
 	 * 获得分组中的对子成牌
 	 * @param numberGroup
 	 * @return
 	 */
-	private static List<Card> getPairs(MapList<CardNumber, Card> numberGroup) {
+	private static List<Card> getPairs(List<List<Card>> pairList, MapList<CardNumber, Card> numberGroup) {
         List<Card> pairs = new ArrayList<Card>();
-        List<CardNumber> pairsCardNumber = new ArrayList<CardNumber>();
-        for (List<Card> cards : numberGroup) {
-            if (cards.size() == 2 && pairs.size() < 4) {
-            	pairs.addAll(cards);
-            	pairsCardNumber.add(cards.get(0).getNumber());
-            }
+        List<CardNumber> pairCardNumbers = new ArrayList<CardNumber>();
+        for (List<Card> pair : pairList) {
+        	pairs.addAll(pair);
+        	pairCardNumbers.add(pair.get(0).getNumber());
+        	if (pairs.size() >= 4) break;
         }
         for (List<Card> cards : numberGroup) {
-        	if (pairs.size() < 5) {
-        		if (!pairsCardNumber.contains(cards.get(0).getNumber())) {
-        			pairs.add(cards.get(0));
-        		}
-        	} else {
-        		break;
-        	}
+    		if (!pairCardNumbers.contains(cards.get(0).getNumber())) {
+    			pairs.add(cards.get(0));
+    		}
+    		if (pairs.size() >= 5) break;
         }
         return pairs;
-    }
-	
-	/**
-	 * 获得数量为count的最大卡牌集合
-	 * @param count
-	 * @param numberGroup
-	 * @return
-	 */
-	private static List<Card> getCardsByCount(Integer count, MapList<CardNumber, Card> numberGroup) {
-        for (List<Card> cards : numberGroup) {
-            if (cards.size() == count) {
-                return new ArrayList<Card>(cards);
-            }
-        }
-        return null;
     }
 	
 	/**
@@ -374,5 +318,20 @@ public class HandPowerUtil {
 		    suitGroup.put(card.getSuit(), card);
 		}
 		return suitGroup;
+	}
+	
+	/**
+	 * 按CardNumber相同的张数分组  例 <4, [[Ah,As,Ac,Ad]]>  <2, [[Ks,Kd],[8c,8d]]>
+	 * @param numberGroup
+	 * @return
+	 */
+	private static MapList<Integer, List<Card>> getCountGroup(MapList<CardNumber, Card> numberGroup) {
+		MapList<Integer, List<Card>> countGroup = new MapList<Integer, List<Card>>();
+		for (List<Card> cards : numberGroup) {
+			if (cards.size() > 1) {
+				countGroup.put(cards.size(), cards);
+			}
+		}
+		return countGroup;
 	}
 }

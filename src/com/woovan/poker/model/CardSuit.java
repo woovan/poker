@@ -13,7 +13,7 @@ public enum CardSuit {
 	    this.symbol = symbol;
 	}
 	
-	public static CardSuit getBySymbol(String symbol) {
+	public static CardSuit of(String symbol) {
 		for (CardSuit suit : values()) {
 			if (suit.symbol.equals(symbol)) {
 				return suit;

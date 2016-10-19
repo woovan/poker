@@ -14,8 +14,8 @@ public class Card implements Comparable<Card> {
 	
 	public Card(String symbol) {
 		if (symbol != null && symbol.length() == 2) {
-			CardNumber number = CardNumber.getBySymbol(String.valueOf(symbol.charAt(0)));
-			CardSuit suit = CardSuit.getBySymbol(String.valueOf(symbol.charAt(1)));
+			CardNumber number = CardNumber.of(String.valueOf(symbol.charAt(0)));
+			CardSuit suit = CardSuit.of(String.valueOf(symbol.charAt(1)));
 			if (number != null && suit != null) {
 				this.number = number;
 				this.suit = suit;
@@ -64,8 +64,16 @@ public class Card implements Comparable<Card> {
 		return this.suit == suit;
 	}
 	
+	public boolean isBefore(Card other) {
+		return number.isBefore(other.number);
+	}
+	
+	public boolean isAfter(Card other) {
+		return number.isAfter(other.number);
+	}
+	
 	public boolean isConnecting(Card other) {
-		return number.isConnecting(other.getNumber());
+		return number.isConnecting(other.number);
 	}
 	
 }

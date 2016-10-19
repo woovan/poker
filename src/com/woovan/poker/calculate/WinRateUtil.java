@@ -1,4 +1,4 @@
-package com.woovan.poker.utils;
+package com.woovan.poker.calculate;
 
 import static com.woovan.poker.utils.CardUtil.cards;
 
@@ -28,7 +28,7 @@ public class WinRateUtil {
 			deck.remove(hand);
 		}
 		
-		long totalCount = 30000000;
+		long totalCount = 1500000;
 		
 		Map<List<Card>, BigDecimal> winStat = new HashMap<List<Card>, BigDecimal>();
 		for (int i = 0; i < totalCount; i++) {

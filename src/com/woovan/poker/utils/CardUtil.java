@@ -15,22 +15,21 @@ public class CardUtil {
 	 * @param cardSymbols
 	 * @return
 	 */
-	public static List<Card> card(String cardSymbol) {
+	public static List<Card> cards(String symbol) {
 		List<Card> cards = new ArrayList<Card>();
-		if (cardSymbol != null && cardSymbol.length() % 2 == 0) {
-			for (int i = 0; i < cardSymbol.length(); i+=2) {
-				Card card = new Card(cardSymbol.substring(i, i + 2));
+		if (symbol != null && symbol.length() % 2 == 0) {
+			for (int i = 0; i < symbol.length(); i+=2) {
+				Card card = new Card(symbol.substring(i, i + 2));
 				cards.add(card);
 			}
 		}
 		return cards;
 	}
 	
-	public static List<List<Card>> cards(String... cardList) {
+	public static List<List<Card>> cards(String... symbolList) {
 		List<List<Card>> cards = new ArrayList<List<Card>>();
-		
-		for (String cardSymbol : cardList) {
-			cards.add(card(cardSymbol));
+		for (String symbol : symbolList) {
+			cards.add(cards(symbol));
 		}
 		return cards;
 	}
@@ -49,101 +48,51 @@ public class CardUtil {
     }
 	
 	/**
-	 * 正序排列(从小到大) 不改变原序列
+	 * 逆序排列(从大到小)
 	 * @param cards
 	 * @return
 	 */
-	public static <T extends Comparable<? super T>> List<T> sort(List<T> list) {
-		List<T> sortedList = new ArrayList<T>(list);
-		Collections.sort(sortedList);
-		return sortedList;
-	}
-	
-	/**
-	 * 逆序排列(从大到小) 不改变原序列
-	 * @param cards
-	 * @return
-	 */
-	public static <T extends Comparable<? super T>> List<T> sortDesc(List<T> list) {
-		List<T> sortedList = new ArrayList<T>(list);
-		Collections.sort(sortedList, new Comparator<T>() {
+	public static <T extends Comparable<? super T>> void sortDesc(List<T> list) {
+		Collections.sort(list, new Comparator<T>() {
 
 			@Override
 			public int compare(T card1, T card2) {
 				return card2.compareTo(card1);
 			}
 		});
-		return sortedList;
 	}
 	
 	/**
 	 * 扑克牌是否连续
-	 * @param cards
-	 * @return
-	 */
-	public static boolean isConnecting(List<CardNumber> cards) {
-		return isConnecting(cards, true);
-	}
-	
-	/**
-	 * 扑克牌是否连续
-	 * @param cards
-	 * @param needSort 指定是否需要排序
-	 * @return
-	 */
-	public static boolean isConnecting(List<CardNumber> cards, boolean needSort) {
-		if (cards == null || cards.isEmpty() || cards.size() == 1) {
-			return false;
-		}
-		if (needSort) {
-			cards = sortDesc(cards);
-		}
-		boolean hasAce = (cards.get(0) == CardNumber.ACE);
-		if (hasAce) {
-			List<CardNumber> cardsEndWithAce = new ArrayList<CardNumber>(cards.subList(1, cards.size()));
-			cardsEndWithAce.add(cards.get(0));
-			return _isConnecting(cards) || _isConnecting(cardsEndWithAce);
-		} else {
-			return _isConnecting(cards);
-		}
-	}
-	
-	/**
-	 * 扑克牌是否连续
-	 * @param cards
+	 * @param cards 元素不重复且有序 例AKQJT JT987 特例 5432A
 	 * @return
 	 */
 	public static boolean isCardsConnecting(List<Card> cards) {
 		List<CardNumber> list = toCardNumber(cards);
-		return isConnecting(list, true);
-	}
-	
-	public static boolean isCardsConnecting(List<Card> cards, boolean needSort) {
-		List<CardNumber> list = toCardNumber(cards);
-		return isConnecting(list, needSort);
+		return isConnecting(list);
 	}
 	
 	/**
-	 * 扑克牌是否连续(内部)
-	 * @param cards
+	 * CardNumber是否连续
+	 * @param cardNumbers 元素不重复且有序 例AKQJT JT987 特例 5432A
 	 * @return
 	 */
-	private static boolean _isConnecting(List<CardNumber> cardNumbers) {
-		CardNumber prevNum = null;
-		for (CardNumber num : cardNumbers) {
-			if (prevNum != null && 
-					prevNum.ordinal() != num.ordinal() + 1 && 
-					prevNum.ordinal() != num.ordinal() - 12) {
-				return false;
-			}
-			prevNum = num;
-		}
-		return true;
+	public static boolean isConnecting(List<CardNumber> cardNumbers) {
+		int size = cardNumbers.size();
+		return interval(cardNumbers.get(0), cardNumbers.get(size - 1)) == size - 1;
 	}
 	
-	public static void main(String[] args) {
-		String a = "As5s4s3s2s";
-		List<Card> list = CardUtil.card(a);
-		System.out.println(isCardsConnecting(list));
+	/**
+	 * 获得CardNumber之间的间隔
+	 * @param first last
+	 * @return
+	 */
+	public static int interval(CardNumber first, CardNumber last) {
+		int interval = first.ordinal() - last.ordinal();
+		if (interval < 0) {
+			interval = first.ordinal() + 1;	//interval小于0表示last为A，这时A的序号为-1
+		}
+		return interval;
 	}
+	
 }

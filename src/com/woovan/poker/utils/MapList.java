@@ -31,6 +31,10 @@ public class MapList<K, V> implements Iterable<List<V>> {
     public List<V> get(K key) {
         return mapList.get(key);
     }
+    
+    public boolean containsKey(K key) {
+    	return mapList.containsKey(key);
+    }
 
     public Set<K> keySet() {
         return mapList.keySet();

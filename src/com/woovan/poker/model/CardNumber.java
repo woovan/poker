@@ -22,13 +22,25 @@ public enum CardNumber {
 	    this.symbol = symbol;
 	}
 	
-	public static CardNumber getBySymbol(String symbol) {
+	public static CardNumber of(String symbol) {
 		for (CardNumber num : values()) {
 			if (num.symbol.equals(symbol)) {
 				return num;
 			}
 		}
 		return null;
+	}
+	
+	public boolean isBefore(CardNumber other) {
+		return other != null && 
+				(this.ordinal() - other.ordinal() == -1 || 
+				this.ordinal() - other.ordinal() == 12);
+	}
+	
+	public boolean isAfter(CardNumber other) {
+		return other != null && 
+				(this.ordinal() - other.ordinal() == 1 || 
+				this.ordinal() - other.ordinal() == -12);
 	}
 	
 	public boolean isConnecting(CardNumber other) {
